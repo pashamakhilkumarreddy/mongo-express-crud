@@ -1,0 +1,41 @@
+{
+  "name": "mongo-express-crud",
+  "version": "1.0.0",
+  "description": "Mongo-Express CRUD",
+  "main": "app.js",
+  "scripts": {
+    "start": "nodemon src/app.js --exec \"npm run lint && node\"",
+    "lint": "eslint src/**/*.js",
+    "lint:fix": "eslint src/**/*.js --fix",
+    "prod": "pm2 start app.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pashamakhilkumarreddy/mongo-express-crud.git"
+  },
+  "keywords": [
+    "MongoDB",
+    "Node",
+    "Express"
+  ],
+  "author": "Pasham Akhil Kumar Reddy",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/pashamakhilkumarreddy/mongo-express-crud/issues"
+  },
+  "homepage": "https://github.com/pashamakhilkumarreddy/mongo-express-crud#readme",
+  "dependencies": {
+    "dotenv": "^8.2.0",
+    "express": "^4.17.1",
+    "mongodb": "^3.5.6",
+    "path": "^0.12.7",
+    "pm2": "^4.3.1"
+  },
+  "devDependencies": {
+    "eslint": "^6.8.0",
+    "eslint-config-airbnb-base": "^14.1.0",
+    "eslint-plugin-import": "^2.20.2",
+    "nodemon": "^2.0.3"
+  }
+}
