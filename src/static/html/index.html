@@ -137,7 +137,7 @@
       </div>
     </div>
 
-    <div class="modal update-modal">
+    <div class="modal update-modal is-active">
       <div class="modal-background"></div>
       <div class="modal-content">
         <form class="update-modal-form" action="/todos">
@@ -173,7 +173,15 @@
   <script>
     window.addEventListener('DOMContentLoaded', (e) => {
       const notification = document.querySelector('.notification');
+      const todosList = document.querySelector('#todos-list');
+      const addTodoForm = document.querySelector('#add-todo-form');
+      const todoText = document.querySelector('#todo');
+      const updateModal = document.querySelector('.modal');
+      const submitTodo = document.querySelector('#submit-todo');
+      const updateTodoButton = document.querySelector('#update-todo');
+      const updateTodoInput = document.querySelector('#update-todo-input');
       notification.classList.add('visibility-hidden');
+      updateModal.classList.remove('is-active');
 
       const closeModal = () => {
         updateModal.classList.remove('is-active');
@@ -203,18 +211,10 @@
         closeNotifications();
       })
 
-      document.querySelector('.modal-close').addEventListener('clicl', (e) => {
+      document.querySelector('.modal-close').addEventListener('click', (e) => {
         e.preventDefault();
         closeModal();
       })
-
-      const todosList = document.querySelector('#todos-list');
-      const addTodoForm = document.querySelector('#add-todo-form');
-      const todoText = document.querySelector('#todo');
-      const updateModal = document.querySelector('.modal');
-      const submitTodo = document.querySelector('#submit-todo');
-      const updateTodoButton = document.querySelector('#update-todo');
-      const updateTodoInput = document.querySelector('#update-todo-input');
 
       const resetTodoInput = () => {
         todoText.value = '';
