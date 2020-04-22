@@ -7,6 +7,35 @@ const {
 } = require('../config');
 
 module.exports = {
+  async addTodo(req, res) {
+    try {
+      const {
+        todo,
+      } = req.body;
+      if (todo && todo.trim()) {
+        const addedTodo = await db.getDB().collection(COLLECTION_NAME).insertOneAsync({
+          todo: todo.toString(),
+        });
+        res.status(200).send({
+          err: false,
+          message: 'Successfully added a new todo',
+          data: addedTodo.ops[0],
+        });
+        return;
+      }
+      res.status(403).send({
+        err: true,
+        message: 'Unable to add a new Todo.',
+      });
+    } catch (err) {
+      console.error(err);
+      res.status(500).send({
+        err: true,
+        message: 'Internal server error',
+      });
+    }
+  },
+
   async getTodos(req, res) {
     try {
       const todos = [];
@@ -56,50 +85,21 @@ module.exports = {
           _id: db.getPrimaryKey(id),
         }, {
           $set: {
-            todo,
+            todo: todo.toString(),
           },
         }, {
           returnOriginal: false,
         });
-        console.log(isUpdated);
         res.status(200).send({
           err: false,
-          message: isUpdated.value,
+          message: 'Successfully updated the todo',
+          data: isUpdated.value,
         });
         return;
       }
       res.status(403).send({
         err: false,
         message: 'Unable to update the todo',
-      });
-    } catch (err) {
-      console.error(err);
-      res.status(500).send({
-        err: true,
-        message: 'Internal server error',
-      });
-    }
-  },
-
-  async addTodo(req, res) {
-    try {
-      const {
-        todo,
-      } = req.body;
-      console.log(todo);
-      if (todo && todo.trim()) {
-        const addedTodo = await db.getDB().collection(COLLECTION_NAME).insertOneAsync({
-          todo,
-        });
-        res.status(200).send({
-          err: false,
-          message: addedTodo.ops[0],
-        });
-        return;
-      }
-      res.status(403).send({
-        err: true,
-        message: 'Unable to add a new Todo.',
       });
     } catch (err) {
       console.error(err);
@@ -121,7 +121,8 @@ module.exports = {
         });
         res.status(200).send({
           err: false,
-          message: isTodoDeleted.value,
+          message: 'Successfully deleted the todo',
+          data: isTodoDeleted.value,
         });
         return;
       }

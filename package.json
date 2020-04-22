@@ -26,6 +26,7 @@
   },
   "homepage": "https://github.com/pashamakhilkumarreddy/mongo-express-crud#readme",
   "dependencies": {
+    "@hapi/joi": "^17.1.1",
     "bluebird": "^3.7.2",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",

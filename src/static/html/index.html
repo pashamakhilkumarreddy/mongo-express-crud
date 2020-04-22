@@ -33,11 +33,16 @@
       margin-top: 3rem;
     }
 
-    #add-todo-form {
+    #add-todo-form,
+    .update-modal-form {
       padding: 4rem;
       border: 1px solid #ddd;
       border-radius: 6px;
       box-shadow: 1px 1px 8px 0 rgba(0, 0, 0, 0.2)
+    }
+
+    .update-modal-form {
+      background: #fff;
     }
 
     .list-item {
@@ -81,6 +86,17 @@
     .mb-18 {
       margin-bottom: 9rem;
     }
+
+    .notification {
+      position: absolute;
+      top: 4rem;
+      right: 0.8rem;
+      width: 20rem;
+    }
+
+    .visibility-hidden {
+      visibility: hidden;
+    }
   </style>
 </head>
 
@@ -112,7 +128,7 @@
           </div>
           <div class="field">
             <div class="control">
-              <button class="button is-link is-light">Add Todo</button>
+              <button class="button is-link is-light" id="submit-todo">Add Todo</button>
             </div>
           </div>
         </form>
@@ -120,7 +136,33 @@
         </div>
       </div>
     </div>
+
+    <div class="modal update-modal">
+      <div class="modal-background"></div>
+      <div class="modal-content">
+        <form class="update-modal-form" action="/todos">
+          <div class="field">
+            <label for="update-todo" class="lable">Todo</label>
+            <div class="control">
+              <input type="text" id="update-todo-input" class="input" placeholder="Update Todo" data-id="" />
+            </div>
+          </div>
+          <div class="field">
+            <div class="control">
+              <button id="update-todo" class="button is-primary is-light">Update Todo</button>
+            </div>
+          </div>
+        </form>
+      </div>
+      <button class="modal-close is-large" aria-label="close"></button>
+    </div>
   </main>
+
+  <div class="notification is-primary">
+    <button class="delete"></button>
+
+  </div>
+
   <footer class="footer">
     <div class="content has-text-centered">
       <p>
@@ -130,9 +172,49 @@
   </footer>
   <script>
     window.addEventListener('DOMContentLoaded', (e) => {
+      const notification = document.querySelector('.notification');
+      notification.classList.add('visibility-hidden');
+
+      const closeModal = () => {
+        updateModal.classList.remove('is-active');
+      }
+
+      const closeNotifications = () => {
+        const _notifications = document.querySelectorAll('.notification');
+        _notifications.forEach(notification => {
+          setTimeout(() => {
+            notification.classList.add('visibility-hidden');
+          }, 2000);
+        })
+      }
+
+      const displayMessage = (flag, msg) => {
+        if (flag) {
+          notification.innerText = msg;
+          notification.classList.remove('visibility-hidden');
+        } else {
+          notification.innerText = msg;
+          notification.classList.add('is-danger');
+        }
+      }
+
+      document.querySelector('.delete').addEventListener('click', (e) => {
+        e.preventDefault();
+        closeNotifications();
+      })
+
+      document.querySelector('.modal-close').addEventListener('clicl', (e) => {
+        e.preventDefault();
+        closeModal();
+      })
+
       const todosList = document.querySelector('#todos-list');
       const addTodoForm = document.querySelector('#add-todo-form');
       const todoText = document.querySelector('#todo');
+      const updateModal = document.querySelector('.modal');
+      const submitTodo = document.querySelector('#submit-todo');
+      const updateTodoButton = document.querySelector('#update-todo');
+      const updateTodoInput = document.querySelector('#update-todo-input');
 
       const resetTodoInput = () => {
         todoText.value = '';
@@ -144,10 +226,17 @@
             const isTodoDelete = await fetch(`http://127.0.0.1:3000/todos/${todo._id}`, {
               method: 'delete'
             });
-            if (isTodoDelete.status === 200 && isTodoDelete.ok) {
-              document.getElementById(listItemID).remove();
+            const data = await isTodoDelete.json();
+            if (!data.err) {
+              if (isTodoDelete.status === 200 && isTodoDelete.ok) {
+                document.getElementById(listItemID).remove();
+              }
+              displayMessage(true, data.message);
+            } else {
+              displayMessage(false, data.message);
             }
-          } catch(err) {
+            closeNotifications();
+          } catch (err) {
             console.error(err);
           }
         })
@@ -155,17 +244,49 @@
 
       const updateTodo = (todo, todoID, updateID) => {
         try {
-          document.getElementById(updateID).addEventListener('click', async function (e) {
-            
-            const isTodoUpdated = await fetch(`http://127.0.0.1:3000/todos/${todo._id}`, {
-              method: 'put'
-            });
-            resetTodoInput();
+          document.getElementById(updateID).addEventListener('click', (e) => {
+            updateModal.classList.add('is-active');
+            updateTodoInput.dataset.id = todo._id;
+            updateTodoInput.dataset.todo_id = todoID;
+            updateTodoInput.value = todo.todo;
           });
         } catch (err) {
           console.error(err);
         }
       }
+
+      updateTodoButton.addEventListener('click', async (e) => {
+        e.preventDefault();
+        try {
+          const todoValue = updateTodoInput.value;
+          if (todoValue && todoValue.trim()) {
+            const isTodoUpdated = await fetch(`http://127.0.0.1:3000/todos/${updateTodoInput.dataset.id}`, {
+              method: 'put',
+              body: JSON.stringify({
+                todo: todoValue
+              }),
+              headers: {
+                'Content-Type': 'application/json'
+              }
+            });
+            const data = await isTodoUpdated.json();
+            if (!data.err) {
+              if (isTodoUpdated.status === 200 && isTodoUpdated.ok) {
+                document.getElementById(updateTodoInput.dataset.todo_id).innerText = updateTodoInput.value;
+                closeModal();
+                updateTodoInput.value = '';
+                resetTodoInput();
+              }
+              displayMessage(true, data.message);
+            } else {
+              displayMessage(false, data.message);
+            }
+            closeNotifications();
+          }
+        } catch (err) {
+          console.error(err);
+        }
+      })
 
       const getTodoIds = todo => ({
         listItemID: 'list_' + todo._id,
@@ -178,7 +299,7 @@
         <div id=${ids.todoID}>${todo.todo}</div>
         <div class="field is-grouped">
           <p class="control">
-            <button class="button is-light is-link update-todo" id=${ids.updateID} data-id=${ids.updateID}>
+            <button class="button is-light is-primary update-todo" id=${ids.updateID} data-id=${ids.updateID}>
               Update
             </button>
           </p>
@@ -209,10 +330,16 @@
             method: 'get'
           });
           const formattedTodos = await todos.json();
-          if (formattedTodos) {
-            displayTodos(formattedTodos.data);
-            resetTodoInput();
+          if (!formattedTodos.err) {
+            if (formattedTodos) {
+              displayTodos(formattedTodos.data);
+              resetTodoInput();
+            }
+            displayMessage(true, formattedTodos.message);
+          } else {
+            displayMessage(false, formattedTodos.message);
           }
+          closeNotifications();
         } catch (err) {
           console.error(err);
         }
@@ -234,12 +361,19 @@
                 'Content-Type': 'application/json'
               }
             });
-            console.log(isTodoAdded);
-            if (isTodoAdded && isTodoAdded.status === 200 && isTodoAdded.ok === true) {
-              getTodos();
+            const data = await isTodoAdded.json();
+            if (!data.err) {
+              if (isTodoAdded && isTodoAdded.status === 200 && isTodoAdded.ok === true) {
+                getTodos();
+                displayMessage(true, data.message);
+              }
+            } else {
+              displayMessage(false, data.message);
             }
+            closeNotifications();
           }
         } catch (err) {
+          displayMessage(false, err);
           console.error(err);
         }
       })
