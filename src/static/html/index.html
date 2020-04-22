@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Todo</title>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'self'; font-src 'self' data: https://cdn.jsdelivr.net/; style-src 'unsafe-inline' data: https://cdn.jsdelivr.net/; img-src 'self' data: https://bulma.io/; script-src 'unsafe-inline';">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.8.2/css/bulma.min.css">
+  <link rel="icon" href="/public/images/icons/favicon.ico" type="image/gif" sizes="16x16">
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-size: 16px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+        'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+        sans-serif;
+      position: relative;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-rendering: optimizeLegibility;
+    }
+
+    header {
+      border-bottom: 1px solid #ddd;
+      box-shadow: 0 0 5px 1px rgba(0, 0, 0, 0.2);
+    }
+
+    .mt-6 {
+      margin-top: 3rem;
+    }
+
+    #add-todo-form {
+      padding: 4rem;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      box-shadow: 1px 1px 8px 0 rgba(0, 0, 0, 0.2)
+    }
+
+    .list-item {
+      padding: 1rem;
+      color: #3273dc !important;
+      display: flex;
+      flex-flow: row nowrap;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+
+    .list-item:hover,
+    .list-item:focus {
+      background: #3273dc;
+      color: #fff !important;
+    }
+
+    .footer {
+      position: absolute;
+      bottom: 0;
+      border-top: 1px solid #ddd;
+      padding: 2rem 1.5rem 2rem;
+      width: 100%;
+    }
+
+    .button {
+      box-shadow: 0 0 6px 0 rgba(0, 0, 0, 0.2);
+    }
+
+    .button:hover,
+    .button:focus,
+    .button:active {
+      box-shadow: none;
+    }
+
+    .m-0 {
+      margin: 0;
+    }
+
+    .mb-18 {
+      margin-bottom: 9rem;
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <nav class="navbar" role="navigation" aria-label="main navigation">
+      <div class="navbar-brand">
+        <a class="navbar-item" href="https://bulma.io">
+          <img src="https://bulma.io/images/bulma-logo.png" alt="Todo App" width="112" height="28">
+        </a>
+        <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false">
+          <span aria-hidden="true"></span>
+          <span aria-hidden="true"></span>
+          <span aria-hidden="true"></span>
+        </a>
+      </div>
+    </nav>
+  </header>
+  <main class="container mt-6">
+    <div class="columns is-mobile is-centered m-0">
+      <div class="column is-full">
+        <form id="add-todo-form" action="/todos">
+          <div class="field">
+            <label for="todo" class="label">Todo</label>
+            <div class="control">
+              <input type="text" id="todo" class="input" placeholder="Add a new todo" />
+            </div>
+          </div>
+          <div class="field">
+            <div class="control">
+              <button class="button is-link is-light">Add Todo</button>
+            </div>
+          </div>
+        </form>
+        <div class="list is-hoverable mt-6 mb-18" id="todos-list">
+        </div>
+      </div>
+    </div>
+  </main>
+  <footer class="footer">
+    <div class="content has-text-centered">
+      <p>
+        <strong>Todo App</strong>
+      </p>
+    </div>
+  </footer>
+  <script>
+    window.addEventListener('DOMContentLoaded', (e) => {
+      const todosList = document.querySelector('#todos-list');
+      const addTodoForm = document.querySelector('#add-todo-form');
+      const todoText = document.querySelector('#todo');
+
+      const resetTodoInput = () => {
+        todoText.value = '';
+      }
+
+      const deleteTodo = (todo, listItemID, deleteID) => {
+        document.getElementById(deleteID).addEventListener('click', async (e) => {
+          try {
+            const isTodoDelete = await fetch(`http://127.0.0.1:3000/todos/${todo._id}`, {
+              method: 'delete'
+            });
+            if (isTodoDelete.status === 200 && isTodoDelete.ok) {
+              document.getElementById(listItemID).remove();
+            }
+          } catch(err) {
+            console.error(err);
+          }
+        })
+      }
+
+      const updateTodo = (todo, todoID, updateID) => {
+        try {
+          document.getElementById(updateID).addEventListener('click', async function (e) {
+            
+            const isTodoUpdated = await fetch(`http://127.0.0.1:3000/todos/${todo._id}`, {
+              method: 'put'
+            });
+            resetTodoInput();
+          });
+        } catch (err) {
+          console.error(err);
+        }
+      }
+
+      const getTodoIds = todo => ({
+        listItemID: 'list_' + todo._id,
+        todoID: 'todo_' + todo._id,
+        updateID: 'edit_' + todo._id,
+        deleteID: 'delete_' + todo._id
+      });
+
+      const buildTodo = (todo, ids) => `<div class="list-item" id=${ids.listItemID}>
+        <div id=${ids.todoID}>${todo.todo}</div>
+        <div class="field is-grouped">
+          <p class="control">
+            <button class="button is-light is-link update-todo" id=${ids.updateID} data-id=${ids.updateID}>
+              Update
+            </button>
+          </p>
+          <p class="control">
+            <button class="button is-danger is-light delete-todo" id=${ids.deleteID} data-id=${ids.deleteID}>
+              Delete
+            </button>
+          </p>
+        </div>
+      </div>`;
+
+      const displayTodos = (todos) => {
+        todosList.innerHTML = '';
+        todos.forEach(todo => {
+          const ids = getTodoIds(todo);
+          todosList.innerHTML += buildTodo(todo, ids);
+        })
+        todos.forEach(todo => {
+          const ids = getTodoIds(todo);
+          deleteTodo(todo, ids.listItemID, ids.deleteID);
+          updateTodo(todo, ids.todoID, ids.updateID);
+        })
+      }
+
+      const getTodos = async () => {
+        try {
+          const todos = await fetch(`http://127.0.0.1:3000/todos`, {
+            method: 'get'
+          });
+          const formattedTodos = await todos.json();
+          if (formattedTodos) {
+            displayTodos(formattedTodos.data);
+            resetTodoInput();
+          }
+        } catch (err) {
+          console.error(err);
+        }
+      };
+
+      getTodos();
+
+      addTodoForm.addEventListener('submit', async (e) => {
+        try {
+          e.preventDefault();
+          const todo = todoText.value.trim();
+          if (todo) {
+            const isTodoAdded = await fetch(`http://127.0.0.1:3000/todos`, {
+              method: 'post',
+              body: JSON.stringify({
+                todo
+              }),
+              headers: {
+                'Content-Type': 'application/json'
+              }
+            });
+            console.log(isTodoAdded);
+            if (isTodoAdded && isTodoAdded.status === 200 && isTodoAdded.ok === true) {
+              getTodos();
+            }
+          }
+        } catch (err) {
+          console.error(err);
+        }
+      })
+    })
+  </script>
+</body>
+
+</html>
